@@ -13,6 +13,8 @@ import ReactFlow, {
   Edge,
   Node,
   MarkerType,
+  Handle,
+  Position,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { 
@@ -35,7 +37,8 @@ import { Pipeline } from '@/lib/store'
 // Custom node types
 const nodeTypes = {
   dataset: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-blue-500">
+    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-blue-500 relative">
+      <Handle type="target" position={Position.Left} />
       <div className="flex items-center">
         <Database className="h-4 w-4 mr-2 text-blue-500" />
         <div className="ml-2">
@@ -43,10 +46,12 @@ const nodeTypes = {
           <div className="text-sm text-gray-500">{data.subtitle}</div>
         </div>
       </div>
+      <Handle type="source" position={Position.Right} />
     </div>
   ),
   preprocessing: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-green-500">
+    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-green-500 relative">
+      <Handle type="target" position={Position.Left} />
       <div className="flex items-center">
         <Filter className="h-4 w-4 mr-2 text-green-500" />
         <div className="ml-2">
@@ -54,10 +59,12 @@ const nodeTypes = {
           <div className="text-sm text-gray-500">{data.subtitle}</div>
         </div>
       </div>
+      <Handle type="source" position={Position.Right} />
     </div>
   ),
   model: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-purple-500">
+    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-purple-500 relative">
+      <Handle type="target" position={Position.Left} />
       <div className="flex items-center">
         <Brain className="h-4 w-4 mr-2 text-purple-500" />
         <div className="ml-2">
@@ -65,10 +72,12 @@ const nodeTypes = {
           <div className="text-sm text-gray-500">{data.subtitle}</div>
         </div>
       </div>
+      <Handle type="source" position={Position.Right} />
     </div>
   ),
   training: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-orange-500">
+    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-orange-500 relative">
+      <Handle type="target" position={Position.Left} />
       <div className="flex items-center">
         <Settings className="h-4 w-4 mr-2 text-orange-500" />
         <div className="ml-2">
@@ -76,10 +85,12 @@ const nodeTypes = {
           <div className="text-sm text-gray-500">{data.subtitle}</div>
         </div>
       </div>
+      <Handle type="source" position={Position.Right} />
     </div>
   ),
   evaluation: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-red-500">
+    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-red-500 relative">
+      <Handle type="target" position={Position.Left} />
       <div className="flex items-center">
         <BarChart3 className="h-4 w-4 mr-2 text-red-500" />
         <div className="ml-2">
@@ -87,10 +98,12 @@ const nodeTypes = {
           <div className="text-sm text-gray-500">{data.subtitle}</div>
         </div>
       </div>
+      <Handle type="source" position={Position.Right} />
     </div>
   ),
   verification: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-yellow-500">
+    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-yellow-500 relative">
+      <Handle type="target" position={Position.Left} />
       <div className="flex items-center">
         <Shield className="h-4 w-4 mr-2 text-yellow-500" />
         <div className="ml-2">
@@ -98,10 +111,12 @@ const nodeTypes = {
           <div className="text-sm text-gray-500">{data.subtitle}</div>
         </div>
       </div>
+      <Handle type="source" position={Position.Right} />
     </div>
   ),
   deployment: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-indigo-500">
+    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-indigo-500 relative">
+      <Handle type="target" position={Position.Left} />
       <div className="flex items-center">
         <Zap className="h-4 w-4 mr-2 text-indigo-500" />
         <div className="ml-2">
@@ -109,6 +124,7 @@ const nodeTypes = {
           <div className="text-sm text-gray-500">{data.subtitle}</div>
         </div>
       </div>
+      <Handle type="source" position={Position.Right} />
     </div>
   ),
 }
