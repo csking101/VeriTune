@@ -22,7 +22,7 @@ export interface PipelineNode {
   id: string
   type: string
   position: { x: number; y: number }
-  data: { label: string; subtitle: string; [key: string]: any }
+  data: { label: string; subtitle: string; price?: number; [key: string]: any }
 }
 
 export interface PipelineEdge {
@@ -124,6 +124,15 @@ class AppStore {
 
   getCartTotal(): number {
     return this.state.cart.reduce((sum, item) => sum + item.price, 0)
+  }
+
+  getPipelineTotal(): number {
+    if (!this.state.currentPipeline) return 0
+    return this.state.currentPipeline.nodes.reduce((sum, node) => sum + (node.data.price || 0), 0)
+  }
+
+  getGrandTotal(): number {
+    return this.getCartTotal() + this.getPipelineTotal()
   }
 
   // Pipeline management

@@ -17,7 +17,7 @@ const navigation = [
 
 export function Navigation() {
   const pathname = usePathname()
-  const { cart, removeFromCart, cartTotal } = useStore()
+  const { cart, removeFromCart, cartTotal, pipelineTotal, grandTotal, currentPipeline } = useStore()
   const [showCart, setShowCart] = useState(false)
 
   return (
@@ -98,37 +98,77 @@ export function Navigation() {
                       <>
                         {/* Cart Items */}
                         <div className="space-y-3 max-h-64 overflow-y-auto">
-                          {cart.map((dataset) => (
-                            <div key={dataset.id} className="flex items-center space-x-3 p-2 border rounded-lg">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">
-                                  {dataset.name}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {dataset.size} samples • {dataset.category}
-                                </p>
+                          {/* Datasets */}
+                          <div className="space-y-2">
+                            <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Datasets</h4>
+                            {cart.map((dataset) => (
+                              <div key={dataset.id} className="flex items-center space-x-3 p-2 border rounded-lg">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    {dataset.name}
+                                  </p>
+                                  <p className="text-sm text-gray-500">
+                                    {dataset.size} samples • {dataset.category}
+                                  </p>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm font-medium text-gray-900">
+                                    {formatCurrency(dataset.price)}
+                                  </span>
+                                  <button
+                                    onClick={() => removeFromCart(dataset.id)}
+                                    className="text-red-400 hover:text-red-500"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </div>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-medium text-gray-900">
-                                  {formatCurrency(dataset.price)}
-                                </span>
-                                <button
-                                  onClick={() => removeFromCart(dataset.id)}
-                                  className="text-red-400 hover:text-red-500"
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
-                              </div>
+                            ))}
+                          </div>
+
+                          {/* Pipeline Components */}
+                          {currentPipeline && currentPipeline.nodes.length > 0 && (
+                            <div className="space-y-2 border-t pt-2">
+                              <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Pipeline Components</h4>
+                              {currentPipeline.nodes.filter(node => node.data.price && node.data.price > 0).map((node) => (
+                                <div key={node.id} className="flex items-center space-x-3 p-2 border rounded-lg bg-gray-50">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                      {node.data.label}
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                      Pipeline component
+                                    </p>
+                                  </div>
+                                  <span className="text-sm font-medium text-gray-900">
+                                    {formatCurrency(node.data.price || 0)}
+                                  </span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
                         </div>
 
                         {/* Cart Total */}
                         <div className="border-t pt-4 mt-4">
-                          <div className="flex justify-between items-center mb-4">
+                          {/* Subtotals */}
+                          <div className="space-y-2 mb-3">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Datasets</span>
+                              <span className="text-gray-900">{formatCurrency(cartTotal)}</span>
+                            </div>
+                            {pipelineTotal > 0 && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Pipeline Components</span>
+                                <span className="text-gray-900">{formatCurrency(pipelineTotal)}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex justify-between items-center mb-4 pt-2 border-t">
                             <span className="text-base font-medium text-gray-900">Total</span>
                             <span className="text-lg font-bold text-gray-900">
-                              {formatCurrency(cartTotal)}
+                              {formatCurrency(grandTotal)}
                             </span>
                           </div>
                           <Link

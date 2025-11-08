@@ -18,6 +18,8 @@ export function useStore() {
     removeFromCart: (datasetId: number) => store.removeFromCart(datasetId),
     clearCart: () => store.clearCart(),
     cartTotal: store.getCartTotal(),
+    pipelineTotal: store.getPipelineTotal(),
+    grandTotal: store.getGrandTotal(),
 
     // Pipeline
     currentPipeline: store.getCurrentPipeline(),

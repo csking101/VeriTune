@@ -137,6 +137,7 @@ const componentLibrary = [
     icon: Database,
     color: 'blue',
     description: 'Input dataset from marketplace',
+    price: 0, // Datasets are priced separately
   },
   {
     type: 'preprocessing',
@@ -144,6 +145,7 @@ const componentLibrary = [
     icon: Filter,
     color: 'green',
     description: 'Data cleaning and transformation',
+    price: 25.00,
   },
   {
     type: 'model',
@@ -151,6 +153,7 @@ const componentLibrary = [
     icon: Brain,
     color: 'purple',
     description: 'Base model selection',
+    price: 150.00,
   },
   {
     type: 'training',
@@ -158,6 +161,7 @@ const componentLibrary = [
     icon: Settings,
     color: 'orange',
     description: 'Hyperparameters and training settings',
+    price: 75.00,
   },
   {
     type: 'evaluation',
@@ -165,6 +169,7 @@ const componentLibrary = [
     icon: BarChart3,
     color: 'red',
     description: 'Model validation and metrics',
+    price: 50.00,
   },
   {
     type: 'verification',
@@ -172,6 +177,7 @@ const componentLibrary = [
     icon: Shield,
     color: 'yellow',
     description: 'Nautilus TEE attestation',
+    price: 100.00,
   },
   {
     type: 'deployment',
@@ -179,6 +185,7 @@ const componentLibrary = [
     icon: Zap,
     color: 'indigo',
     description: 'Model deployment configuration',
+    price: 200.00,
   },
 ]
 
@@ -288,7 +295,8 @@ export default function PipelineBuilder() {
         position,
         data: { 
           label: component.label,
-          subtitle: 'Configure settings'
+          subtitle: 'Configure settings',
+          price: component.price
         },
         sourcePosition: 'right' as any,
         targetPosition: 'left' as any,
@@ -339,9 +347,16 @@ export default function PipelineBuilder() {
               onDragStart={(event) => onDragStart(event, component.type)}
               className={`p-3 border-2 border-dashed rounded-lg cursor-move transition-colors ${getColorClasses(component.color)}`}
             >
-              <div className="flex items-center mb-2">
-                <component.icon className="h-5 w-5 mr-2" />
-                <span className="font-medium">{component.label}</span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <component.icon className="h-5 w-5 mr-2" />
+                  <span className="font-medium">{component.label}</span>
+                </div>
+                {component.price > 0 && (
+                  <span className="text-xs font-semibold text-gray-600">
+                    ${component.price.toFixed(2)}
+                  </span>
+                )}
               </div>
               <p className="text-xs">{component.description}</p>
             </div>

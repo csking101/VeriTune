@@ -145,7 +145,7 @@ const trainingEstimates = {
 
 export default function TrainingPortal() {
   const router = useRouter()
-  const { setTrainingConfig, createTrainingJob, currentPipeline, cart } = useStore()
+  const { setTrainingConfig, createTrainingJob, currentPipeline, cart, cartTotal, pipelineTotal, grandTotal } = useStore()
   const [selectedCompute, setSelectedCompute] = useState<string>('')
   const [modelSize, setModelSize] = useState<keyof typeof trainingEstimates>('medium')
   const [priority, setPriority] = useState<'standard' | 'high' | 'urgent'>('standard')
@@ -406,10 +406,61 @@ export default function TrainingPortal() {
 
         {/* Cost Estimate & Launch */}
         <div className="space-y-6">
-          {/* Cost Breakdown */}
+          {/* Project Summary */}
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Cost Estimate</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Project Summary</h2>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              {/* Datasets */}
+              {cart.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Datasets ({cart.length})</h4>
+                  <div className="space-y-2">
+                    {cart.map((dataset) => (
+                      <div key={dataset.id} className="flex justify-between text-sm">
+                        <span className="text-gray-600 truncate">{dataset.name}</span>
+                        <span className="font-medium">{formatCurrency(dataset.price)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Pipeline Components */}
+              {currentPipeline && currentPipeline.nodes.filter(node => node.data.price && node.data.price > 0).length > 0 && (
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Pipeline Components</h4>
+                  <div className="space-y-2">
+                    {currentPipeline.nodes
+                      .filter(node => node.data.price && node.data.price > 0)
+                      .map((node) => (
+                        <div key={node.id} className="flex justify-between text-sm">
+                          <span className="text-gray-600">{node.data.label}</span>
+                          <span className="font-medium">{formatCurrency(node.data.price || 0)}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Project Subtotal */}
+              {(cartTotal > 0 || pipelineTotal > 0) && (
+                <div className="border-t pt-4">
+                  <div className="flex justify-between text-sm font-medium">
+                    <span className="text-gray-900">Project Subtotal</span>
+                    <span className="text-gray-900">{formatCurrency(grandTotal)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Compute Cost Breakdown */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Compute Cost</h2>
             </div>
 
             <div className="p-6">
