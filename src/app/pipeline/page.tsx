@@ -193,13 +193,103 @@ const initialNodes: Node[] = [
   {
     id: '1',
     type: 'dataset',
-    position: { x: 100, y: 100 },
-    data: { label: 'Customer Support Data', subtitle: '50K samples, 2GB' },
+    position: { x: 100, y: 200 },
+    data: { label: 'Customer Support Data', subtitle: '50K samples, 2GB', price: 0 },
     sourcePosition: 'right' as any,
+  },
+  {
+    id: '2',
+    type: 'preprocessing',
+    position: { x: 350, y: 200 },
+    data: { label: 'Text Preprocessing', subtitle: 'Clean & normalize text', price: 25.00 },
+    sourcePosition: 'right' as any,
+    targetPosition: 'left' as any,
+  },
+  {
+    id: '3',
+    type: 'model',
+    position: { x: 600, y: 200 },
+    data: { label: 'GPT-3.5 Turbo', subtitle: 'Base language model', price: 150.00 },
+    sourcePosition: 'right' as any,
+    targetPosition: 'left' as any,
+  },
+  {
+    id: '4',
+    type: 'training',
+    position: { x: 850, y: 200 },
+    data: { label: 'Fine-tuning Config', subtitle: 'LR: 0.0001, Batch: 16', price: 75.00 },
+    sourcePosition: 'right' as any,
+    targetPosition: 'left' as any,
+  },
+  {
+    id: '5',
+    type: 'evaluation',
+    position: { x: 600, y: 350 },
+    data: { label: 'Model Evaluation', subtitle: 'Accuracy & F1 metrics', price: 50.00 },
+    sourcePosition: 'right' as any,
+    targetPosition: 'left' as any,
+  },
+  {
+    id: '6',
+    type: 'verification',
+    position: { x: 850, y: 350 },
+    data: { label: 'TEE Verification', subtitle: 'Nautilus attestation', price: 100.00 },
+    sourcePosition: 'right' as any,
+    targetPosition: 'left' as any,
+  },
+  {
+    id: '7',
+    type: 'deployment',
+    position: { x: 1100, y: 275 },
+    data: { label: 'Model Deployment', subtitle: 'HuggingFace endpoint', price: 200.00 },
+    targetPosition: 'left' as any,
   },
 ]
 
-const initialEdges: Edge[] = []
+const initialEdges: Edge[] = [
+  {
+    id: 'e1-2',
+    source: '1',
+    target: '2',
+    markerEnd: { type: MarkerType.ArrowClosed },
+    style: { strokeWidth: 2 },
+  },
+  {
+    id: 'e2-3',
+    source: '2',
+    target: '3',
+    markerEnd: { type: MarkerType.ArrowClosed },
+    style: { strokeWidth: 2 },
+  },
+  {
+    id: 'e3-4',
+    source: '3',
+    target: '4',
+    markerEnd: { type: MarkerType.ArrowClosed },
+    style: { strokeWidth: 2 },
+  },
+  {
+    id: 'e4-5',
+    source: '4',
+    target: '5',
+    markerEnd: { type: MarkerType.ArrowClosed },
+    style: { strokeWidth: 2 },
+  },
+  {
+    id: 'e5-6',
+    source: '5',
+    target: '6',
+    markerEnd: { type: MarkerType.ArrowClosed },
+    style: { strokeWidth: 2 },
+  },
+  {
+    id: 'e6-7',
+    source: '6',
+    target: '7',
+    markerEnd: { type: MarkerType.ArrowClosed },
+    style: { strokeWidth: 2 },
+  },
+]
 
 export default function PipelineBuilder() {
   const router = useRouter()
@@ -207,8 +297,8 @@ export default function PipelineBuilder() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
-  const [nodeIdCounter, setNodeIdCounter] = useState(2)
-  const [pipelineName, setPipelineName] = useState('My Training Pipeline')
+  const [nodeIdCounter, setNodeIdCounter] = useState(8) // Updated to account for default nodes
+  const [pipelineName, setPipelineName] = useState('Default Training Pipeline')
 
   // Initialize nodes from cart datasets
   const cartNodes = useMemo(() => {
@@ -233,10 +323,28 @@ export default function PipelineBuilder() {
     }
   }, [cartNodes, setNodes])
 
-  // Initialize nodes from cart on component mount
+  // Initialize default pipeline on component mount
   useEffect(() => {
-    updateNodesFromCart()
-  }, [updateNodesFromCart])
+    // Only override with cart nodes if there are cart items and no current pipeline
+    if (cartNodes.length > 0 && !currentPipeline) {
+      setNodes(cartNodes)
+      setNodeIdCounter(cartNodes.length + 1)
+    }
+    
+    // Save default pipeline to store on initial load
+    if (!currentPipeline) {
+      const defaultPipeline: Pipeline = {
+        id: 'default',
+        name: pipelineName,
+        nodes: initialNodes as any,
+        edges: initialEdges as any,
+        datasets: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      setCurrentPipeline(defaultPipeline)
+    }
+  }, [cartNodes, currentPipeline, setCurrentPipeline, pipelineName, setNodes])
 
   const handleSavePipeline = () => {
     const pipeline: Pipeline = {
@@ -284,9 +392,12 @@ export default function PipelineBuilder() {
         return
       }
 
+      // Get the ReactFlow wrapper bounds
+      const reactFlowBounds = (event.target as Element).closest('.react-flow')?.getBoundingClientRect()
+      
       const position = {
-        x: event.clientX - 200,
-        y: event.clientY - 100,
+        x: event.clientX - (reactFlowBounds?.left || 0) - 100,
+        y: event.clientY - (reactFlowBounds?.top || 0) - 50,
       }
 
       const newNode: Node = {
