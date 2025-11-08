@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { 
   Server, 
   Cpu, 
@@ -18,6 +19,7 @@ import {
   MapPin
 } from 'lucide-react'
 import { formatCurrency, formatDuration } from '@/lib/utils'
+import { useStore } from '@/lib/hooks'
 
 // Mock compute options
 const computeOptions = [
@@ -142,14 +144,51 @@ const trainingEstimates = {
 }
 
 export default function TrainingPortal() {
+  const router = useRouter()
+  const { setTrainingConfig, createTrainingJob, currentPipeline, cart } = useStore()
   const [selectedCompute, setSelectedCompute] = useState<string>('')
   const [modelSize, setModelSize] = useState<keyof typeof trainingEstimates>('medium')
   const [priority, setPriority] = useState<'standard' | 'high' | 'urgent'>('standard')
   const [autoShutdown, setAutoShutdown] = useState(true)
   const [notifications, setNotifications] = useState(true)
+  const [isLaunching, setIsLaunching] = useState(false)
 
   const selectedOption = computeOptions.find(opt => opt.id === selectedCompute)
   const estimate = trainingEstimates[modelSize]
+
+  const handleLaunchTraining = async () => {
+    if (!selectedCompute || !selectedOption) return
+
+    setIsLaunching(true)
+
+    try {
+      // Save training configuration
+      const config = {
+        computeId: selectedCompute,
+        modelSize,
+        priority,
+        autoShutdown,
+        notifications,
+      }
+      
+      setTrainingConfig(config)
+
+      // Create training job
+      const jobName = `Training Job - ${new Date().toLocaleDateString()}`
+      const job = createTrainingJob(jobName)
+
+      // Update job with calculated cost
+      const cost = calculateCost()
+      // Note: In a real app, you'd call updateTrainingJob here
+      
+      // Navigate to progress page
+      router.push('/progress')
+    } catch (error) {
+      console.error('Failed to launch training job:', error)
+    } finally {
+      setIsLaunching(false)
+    }
+  }
   
   const calculateCost = () => {
     if (!selectedOption || !estimate) return 0
@@ -443,15 +482,16 @@ export default function TrainingPortal() {
           <div className="bg-white rounded-lg shadow">
             <div className="p-6">
               <button
-                disabled={!selectedCompute}
+                disabled={!selectedCompute || isLaunching}
+                onClick={handleLaunchTraining}
                 className={`w-full flex items-center justify-center px-4 py-3 rounded-md text-sm font-medium ${
-                  selectedCompute
+                  selectedCompute && !isLaunching
                     ? 'bg-green-600 text-white hover:bg-green-700'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
               >
                 <Zap className="h-4 w-4 mr-2" />
-                Launch Training Job
+                {isLaunching ? 'Launching...' : 'Launch Training Job'}
                 <ArrowRight className="h-4 w-4 ml-2" />
               </button>
 

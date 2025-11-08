@@ -25,6 +25,7 @@ import {
   ExternalLink
 } from 'lucide-react'
 import { formatCurrency, formatDuration } from '@/lib/utils'
+import { useStore } from '@/lib/hooks'
 
 // Mock training jobs data
 const trainingJobs = [
@@ -202,9 +203,47 @@ const getStatusBadge = (status: string) => {
 }
 
 export default function ProgressTracker() {
+  const { trainingJobs: storeTrainingJobs } = useStore()
   const [selectedJob, setSelectedJob] = useState<number | null>(null)
   const [selectedStep, setSelectedStep] = useState<number | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+
+  // Add default pipeline steps for store jobs that don't have them
+  const enhanceStoreJobs = (jobs: typeof storeTrainingJobs) => {
+    return jobs.map(job => ({
+      ...job,
+      dataset: job.dataset || 'No dataset',
+      model: 'GPT-3.5 Turbo',
+      compute: 'NVIDIA T4',
+      accuracy: job.accuracy || null,
+      loss: null,
+      duration: job.startTime ? Math.floor((Date.now() - new Date(job.startTime).getTime()) / 1000) : 0,
+      steps: [
+        { id: 1, name: 'Dataset Loading', status: 'completed', progress: 100, duration: 180 },
+        { id: 2, name: 'Preprocessing', status: 'completed', progress: 100, duration: 600 },
+        { id: 3, name: 'Model Training', status: job.status === 'queued' ? 'pending' : job.status === 'training' ? 'running' : job.status, progress: job.progress, duration: job.status === 'completed' ? 12600 : null },
+        { id: 4, name: 'Evaluation', status: job.status === 'completed' ? 'completed' : 'pending', progress: job.status === 'completed' ? 100 : 0, duration: job.status === 'completed' ? 900 : null },
+        { id: 5, name: 'Verification', status: job.status === 'completed' ? 'completed' : 'pending', progress: job.status === 'completed' ? 100 : 0, duration: job.status === 'completed' ? 720 : null },
+        { id: 6, name: 'Deployment', status: job.status === 'completed' ? 'completed' : 'pending', progress: job.status === 'completed' ? 100 : 0, duration: job.status === 'completed' ? 300 : null },
+      ],
+      logs: [
+        { timestamp: job.startTime || new Date().toISOString(), level: 'info', message: 'Training job created and queued' },
+        ...(job.status !== 'queued' ? [{ timestamp: job.startTime || new Date().toISOString(), level: 'info', message: 'Training job started' }] : []),
+        ...(job.status === 'completed' ? [{ timestamp: job.endTime || new Date().toISOString(), level: 'success', message: 'Training completed successfully' }] : []),
+      ],
+      metrics: {
+        accuracy: job.status === 'completed' ? [0.45, 0.67, 0.78, 0.85, 0.89, 0.92] : [],
+        loss: job.status === 'completed' ? [2.1, 1.4, 0.8, 0.5, 0.3, 0.23] : [],
+        epochs: job.status === 'completed' ? 6 : 0,
+      }
+    }))
+  }
+
+  // Combine store jobs with mock jobs
+  const allJobs = [
+    ...enhanceStoreJobs(storeTrainingJobs),
+    ...trainingJobs.slice(0, Math.max(0, 4 - storeTrainingJobs.length))
+  ]
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -213,7 +252,7 @@ export default function ProgressTracker() {
     setRefreshing(false)
   }
 
-  const selectedJobData = selectedJob ? trainingJobs.find(job => job.id === selectedJob) : null
+  const selectedJobData = selectedJob ? allJobs.find(job => job.id === selectedJob) : null
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -244,7 +283,7 @@ export default function ProgressTracker() {
             </div>
 
             <div className="divide-y divide-gray-200">
-              {trainingJobs.map((job) => (
+              {allJobs.map((job) => (
                 <div
                   key={job.id}
                   className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${

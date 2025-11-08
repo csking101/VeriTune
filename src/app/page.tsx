@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/utils'
+import { useStore } from '@/lib/hooks'
 
 // Mock data for dashboard
 const stats = [
@@ -125,6 +126,11 @@ const getStatusBadge = (status: string) => {
 }
 
 export default function Dashboard() {
+  const { trainingJobs } = useStore()
+  
+  // Combine actual training jobs with mock data for demonstration
+  const allJobs = [...trainingJobs, ...recentModels.slice(0, Math.max(0, 4 - trainingJobs.length))]
+  
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
@@ -215,24 +221,24 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {recentModels.map((model) => (
-                  <tr key={model.id} className="hover:bg-gray-50">
+                {allJobs.map((job) => (
+                  <tr key={job.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        {getStatusIcon(model.status)}
+                        {getStatusIcon(job.status)}
                         <div className="ml-3">
                           <div className="text-sm font-medium text-gray-900">
-                            {model.name}
+                            {job.name}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {model.dataset}
+                            {job.dataset || 'No dataset'}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={getStatusBadge(model.status)}>
-                        {model.status}
+                      <span className={getStatusBadge(job.status)}>
+                        {job.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -240,21 +246,21 @@ export default function Dashboard() {
                         <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
                           <div
                             className="bg-blue-600 h-2 rounded-full"
-                            style={{ width: `${model.progress}%` }}
+                            style={{ width: `${job.progress}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm text-gray-900">{model.progress}%</span>
+                        <span className="text-sm text-gray-900">{job.progress}%</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency(model.cost)}
+                      {formatCurrency(job.cost)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {model.accuracy ? `${model.accuracy}%` : '-'}
+                      {job.accuracy ? `${job.accuracy}%` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Link
-                        href={`/progress?id=${model.id}`}
+                        href={`/progress?id=${job.id}`}
                         className="text-blue-600 hover:text-blue-900"
                       >
                         View Details
