@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { 
   Search, 
   Filter, 
@@ -16,6 +17,8 @@ import {
   HardDrive
 } from 'lucide-react'
 import { formatCurrency, formatBytes } from '@/lib/utils'
+import { useStore } from '@/lib/hooks'
+import { Dataset } from '@/lib/store'
 
 // Mock dataset data
 const datasets = [
@@ -140,12 +143,13 @@ const sortOptions = [
 ]
 
 export default function Marketplace() {
+  const router = useRouter()
+  const { cart, addToCart, removeFromCart, cartTotal } = useStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [sortBy, setSortBy] = useState('relevance')
   const [priceRange, setPriceRange] = useState([0, 1000])
   const [verifiedOnly, setVerifiedOnly] = useState(false)
-  const [cart, setCart] = useState<number[]>([])
 
   const filteredAndSortedDatasets = useMemo(() => {
     let filtered = datasets.filter(dataset => {
@@ -181,14 +185,16 @@ export default function Marketplace() {
     return filtered
   }, [searchQuery, selectedCategory, sortBy, priceRange, verifiedOnly])
 
-  const addToCart = (datasetId: number) => {
-    if (!cart.includes(datasetId)) {
-      setCart([...cart, datasetId])
-    }
+  const handleAddToCart = (dataset: Dataset) => {
+    addToCart(dataset)
   }
 
-  const removeFromCart = (datasetId: number) => {
-    setCart(cart.filter(id => id !== datasetId))
+  const handleRemoveFromCart = (datasetId: number) => {
+    removeFromCart(datasetId)
+  }
+
+  const proceedToPipeline = () => {
+    router.push('/pipeline')
   }
 
   return (
@@ -349,16 +355,16 @@ export default function Marketplace() {
                   <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
                     <Eye className="h-4 w-4" />
                   </button>
-                  {cart.includes(dataset.id) ? (
+                  {cart.find(item => item.id === dataset.id) ? (
                     <button
-                      onClick={() => removeFromCart(dataset.id)}
+                      onClick={() => handleRemoveFromCart(dataset.id)}
                       className="px-4 py-2 bg-red-100 text-red-700 rounded-md text-sm font-medium hover:bg-red-200 transition-colors"
                     >
                       Remove
                     </button>
                   ) : (
                     <button
-                      onClick={() => addToCart(dataset.id)}
+                      onClick={() => handleAddToCart(dataset as Dataset)}
                       className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                     >
                       Add to Cart
@@ -392,14 +398,12 @@ export default function Marketplace() {
             </button>
           </div>
           <div className="text-sm text-gray-600 mb-3">
-            Total: {formatCurrency(
-              cart.reduce((sum, id) => {
-                const dataset = datasets.find(d => d.id === id)
-                return sum + (dataset?.price || 0)
-              }, 0)
-            )}
+            Total: {formatCurrency(cartTotal)}
           </div>
-          <button className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors">
+          <button 
+            onClick={proceedToPipeline}
+            className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
             Proceed to Pipeline Builder
           </button>
         </div>

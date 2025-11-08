@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -28,6 +29,8 @@ import {
   Filter,
   GitBranch
 } from 'lucide-react'
+import { useStore } from '@/lib/hooks'
+import { Pipeline } from '@/lib/store'
 
 // Custom node types
 const nodeTypes = {
@@ -176,10 +179,62 @@ const initialNodes: Node[] = [
 const initialEdges: Edge[] = []
 
 export default function PipelineBuilder() {
+  const router = useRouter()
+  const { cart, currentPipeline, setCurrentPipeline, savePipeline } = useStore()
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
   const [nodeIdCounter, setNodeIdCounter] = useState(2)
+  const [pipelineName, setPipelineName] = useState('My Training Pipeline')
+
+  // Initialize nodes from cart datasets
+  const cartNodes = useMemo(() => {
+    return cart.map((dataset, index) => ({
+      id: `dataset-${dataset.id}`,
+      type: 'dataset',
+      position: { x: 100, y: 100 + (index * 120) },
+      data: { 
+        label: dataset.name,
+        subtitle: `${dataset.samples.toLocaleString()} samples, ${(dataset.size / (1024 * 1024 * 1024)).toFixed(1)}GB`,
+        dataset: dataset
+      },
+      sourcePosition: 'right' as any,
+    }))
+  }, [cart])
+
+  // Update initial nodes when cart changes
+  const updateNodesFromCart = useCallback(() => {
+    if (cartNodes.length > 0) {
+      setNodes(cartNodes)
+      setNodeIdCounter(cartNodes.length + 1)
+    }
+  }, [cartNodes, setNodes])
+
+  // Initialize nodes from cart on component mount
+  useEffect(() => {
+    updateNodesFromCart()
+  }, [updateNodesFromCart])
+
+  const handleSavePipeline = () => {
+    const pipeline: Pipeline = {
+      id: Date.now().toString(),
+      name: pipelineName,
+      nodes: nodes as any,
+      edges: edges as any,
+      datasets: cart,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+    savePipeline(pipeline)
+    setCurrentPipeline(pipeline)
+  }
+
+  const handleRunPipeline = () => {
+    // Save pipeline first
+    handleSavePipeline()
+    // Navigate to training portal
+    router.push('/training')
+  }
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge({
@@ -279,11 +334,17 @@ export default function PipelineBuilder() {
 
         {/* Pipeline Actions */}
         <div className="p-4 border-t border-gray-200 space-y-2">
-          <button className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
+          <button 
+            onClick={handleSavePipeline}
+            className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+          >
             <Save className="h-4 w-4 mr-2" />
             Save Pipeline
           </button>
-          <button className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700">
+          <button 
+            onClick={handleRunPipeline}
+            className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
+          >
             <Play className="h-4 w-4 mr-2" />
             Run Pipeline
           </button>
