@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { Brain, Database, Settings, Wallet, Activity, ShoppingCart, X, ArrowRight } from 'lucide-react'
+import { Brain, Database, Settings, Wallet, Activity, ShoppingCart, X, ArrowRight, Bot } from 'lucide-react'
 import { cn, formatCurrency } from '@/lib/utils'
 import { useStore } from '@/lib/hooks'
 
@@ -13,6 +13,7 @@ const navigation = [
   { name: 'Pipeline Builder', href: '/pipeline', icon: Settings },
   { name: 'Training Portal', href: '/training', icon: Activity },
   { name: 'Progress Tracker', href: '/progress', icon: Activity },
+  { name: 'Agent Builder', href: '/agents', icon: Bot },
 ]
 
 export function Navigation() {
