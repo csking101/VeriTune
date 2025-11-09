@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { store, Dataset, Pipeline, TrainingJob, TrainingConfig } from './store'
+import { store, Dataset, Pipeline, TrainingJob, TrainingConfig, DeployedAgent } from './store'
 
 export function useStore() {
   const [, forceUpdate] = useState({})
@@ -33,5 +33,11 @@ export function useStore() {
     createTrainingJob: (name: string) => store.createTrainingJob(name),
     trainingJobs: store.getTrainingJobs(),
     updateTrainingJob: (jobId: number, updates: Partial<TrainingJob>) => store.updateTrainingJob(jobId, updates),
+
+    // Agents
+    deployedAgents: store.getDeployedAgents(),
+    createAgent: (agentData: Omit<DeployedAgent, 'id' | 'createdAt' | 'totalRequests' | 'monthlyRequests' | 'revenue'>) => store.createAgent(agentData),
+    updateAgent: (agentId: number, updates: Partial<DeployedAgent>) => store.updateAgent(agentId, updates),
+    deleteAgent: (agentId: number) => store.deleteAgent(agentId),
   }
 }

@@ -69,6 +69,35 @@ export interface TrainingJob {
   loss?: number
 }
 
+export interface DeployedAgent {
+  id: number
+  name: string
+  description: string
+  baseModel: string
+  status: 'deploying' | 'deployed' | 'failed' | 'stopped'
+  deploymentType: 'endpoint' | 'marketplace' | 'webhook'
+  apiEndpoint?: string
+  apiKey?: string
+  createdAt: string
+  lastUsed?: string
+  totalRequests: number
+  monthlyRequests: number
+  revenue: number
+  pricing: {
+    type: 'free' | 'per-request' | 'subscription'
+    amount: number
+  }
+  deploymentCost: number
+  settings: {
+    temperature: number
+    maxTokens: number
+    rateLimits: {
+      requestsPerMinute: number
+      requestsPerDay: number
+    }
+  }
+}
+
 // Global state
 class AppStore {
   private static instance: AppStore
@@ -78,6 +107,7 @@ class AppStore {
     currentPipeline: null as Pipeline | null,
     trainingJobs: [] as TrainingJob[],
     currentTrainingConfig: null as TrainingConfig | null,
+    deployedAgents: [] as DeployedAgent[],
   }
 
   private listeners: (() => void)[] = []
@@ -200,6 +230,39 @@ class AppStore {
       this.state.trainingJobs[jobIndex] = { ...this.state.trainingJobs[jobIndex], ...updates }
       this.notify()
     }
+  }
+
+  // Agent management
+  createAgent(agentData: Omit<DeployedAgent, 'id' | 'createdAt' | 'totalRequests' | 'monthlyRequests' | 'revenue'>): DeployedAgent {
+    const agent: DeployedAgent = {
+      id: Date.now(),
+      createdAt: new Date().toISOString(),
+      totalRequests: 0,
+      monthlyRequests: 0,
+      revenue: 0,
+      ...agentData,
+    }
+
+    this.state.deployedAgents.push(agent)
+    this.notify()
+    return agent
+  }
+
+  getDeployedAgents(): DeployedAgent[] {
+    return this.state.deployedAgents
+  }
+
+  updateAgent(agentId: number, updates: Partial<DeployedAgent>) {
+    const agentIndex = this.state.deployedAgents.findIndex(agent => agent.id === agentId)
+    if (agentIndex >= 0) {
+      this.state.deployedAgents[agentIndex] = { ...this.state.deployedAgents[agentIndex], ...updates }
+      this.notify()
+    }
+  }
+
+  deleteAgent(agentId: number) {
+    this.state.deployedAgents = this.state.deployedAgents.filter(agent => agent.id !== agentId)
+    this.notify()
   }
 }
 

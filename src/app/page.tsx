@@ -11,7 +11,10 @@ import {
   TrendingUp,
   Users,
   Server,
-  DollarSign
+  DollarSign,
+  Bot,
+  Globe,
+  Zap
 } from 'lucide-react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/utils'
@@ -125,8 +128,53 @@ const getStatusBadge = (status: string) => {
   }
 }
 
+const getAgentStatusIcon = (status: string) => {
+  switch (status) {
+    case 'deployed':
+      return <CheckCircle className="h-5 w-5 text-green-500" />
+    case 'deploying':
+      return <Activity className="h-5 w-5 text-blue-500 animate-pulse" />
+    case 'failed':
+      return <XCircle className="h-5 w-5 text-red-500" />
+    case 'stopped':
+      return <Clock className="h-5 w-5 text-gray-500" />
+    default:
+      return <Clock className="h-5 w-5 text-gray-500" />
+  }
+}
+
+const getAgentStatusBadge = (status: string) => {
+  const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+  
+  switch (status) {
+    case 'deployed':
+      return `${baseClasses} bg-green-100 text-green-800`
+    case 'deploying':
+      return `${baseClasses} bg-blue-100 text-blue-800`
+    case 'failed':
+      return `${baseClasses} bg-red-100 text-red-800`
+    case 'stopped':
+      return `${baseClasses} bg-gray-100 text-gray-800`
+    default:
+      return `${baseClasses} bg-gray-100 text-gray-800`
+  }
+}
+
+const getDeploymentTypeIcon = (type: string) => {
+  switch (type) {
+    case 'endpoint':
+      return <Globe className="h-4 w-4 text-blue-500" />
+    case 'marketplace':
+      return <Users className="h-4 w-4 text-purple-500" />
+    case 'webhook':
+      return <Zap className="h-4 w-4 text-orange-500" />
+    default:
+      return <Bot className="h-4 w-4 text-gray-500" />
+  }
+}
+
 export default function Dashboard() {
-  const { trainingJobs } = useStore()
+  const { trainingJobs, deployedAgents } = useStore()
   
   // Combine actual training jobs with mock data for demonstration
   const allJobs = [...trainingJobs, ...recentModels.slice(0, Math.max(0, 4 - trainingJobs.length))]
@@ -274,8 +322,80 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Deployed Agents */}
+      {deployedAgents.length > 0 && (
+        <div className="mt-8 bg-white shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">
+                Deployed Agents
+              </h3>
+              <Link
+                href="/agents"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Agent
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {deployedAgents.map((agent) => (
+                <div key={agent.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center">
+                      {getAgentStatusIcon(agent.status)}
+                      <div className="ml-3">
+                        <h4 className="text-sm font-medium text-gray-900">{agent.name}</h4>
+                        <p className="text-xs text-gray-500">{agent.baseModel}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {getDeploymentTypeIcon(agent.deploymentType)}
+                      <span className={getAgentStatusBadge(agent.status)}>
+                        {agent.status}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{agent.description}</p>
+                  
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="text-gray-500">Requests:</span>
+                      <span className="ml-1 font-medium text-gray-900">{agent.totalRequests.toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Revenue:</span>
+                      <span className="ml-1 font-medium text-gray-900">{formatCurrency(agent.revenue)}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Deployed:</span>
+                      <span className="ml-1 font-medium text-gray-900">{new Date(agent.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Cost:</span>
+                      <span className="ml-1 font-medium text-gray-900">{formatCurrency(agent.deploymentCost)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 flex space-x-2">
+                    <button className="flex-1 px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">
+                      Monitor
+                    </button>
+                    <button className="flex-1 px-3 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                      Configure
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quick Actions */}
-      <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
+      <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-4">
         <Link
           href="/marketplace"
           className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg shadow hover:shadow-md transition-shadow"
@@ -329,6 +449,25 @@ export default function Dashboard() {
             </h3>
             <p className="mt-2 text-sm text-gray-500">
               Monitor all your training jobs and deployments
+            </p>
+          </div>
+        </Link>
+
+        <Link
+          href="/agents"
+          className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg shadow hover:shadow-md transition-shadow"
+        >
+          <div>
+            <span className="rounded-lg inline-flex p-3 bg-orange-50 text-orange-700 ring-4 ring-white">
+              <Bot className="h-6 w-6" />
+            </span>
+          </div>
+          <div className="mt-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Create Agents
+            </h3>
+            <p className="mt-2 text-sm text-gray-500">
+              Deploy AI agents from your trained models
             </p>
           </div>
         </Link>

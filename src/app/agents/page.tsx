@@ -135,7 +135,7 @@ const agentTemplates = [
 
 export default function AgentBuilder() {
   const router = useRouter()
-  const { trainingJobs } = useStore()
+  const { trainingJobs, createAgent, updateAgent } = useStore()
   const [selectedModel, setSelectedModel] = useState<any>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null)
   const [agentConfig, setAgentConfig] = useState({
@@ -224,10 +224,43 @@ export default function AgentBuilder() {
     }, 1500)
   }
 
+  const calculateDeploymentCost = () => {
+    const baseCosts = {
+      endpoint: 25.00,
+      marketplace: 15.00,
+      webhook: 35.00
+    }
+    const modelMultiplier = selectedModel?.parameters === '7B' ? 1.5 : 1.0
+    return baseCosts[agentConfig.deploymentType] * modelMultiplier
+  }
+
   const handleDeploy = async () => {
+    if (!selectedModel || !agentConfig.name) return
+    
     setDeploymentStatus('deploying')
+    
+    // Create agent in store
+    const deploymentCost = calculateDeploymentCost()
+    const agent = createAgent({
+      name: agentConfig.name,
+      description: agentConfig.description,
+      baseModel: selectedModel.baseModel,
+      status: 'deploying',
+      deploymentType: agentConfig.deploymentType,
+      apiEndpoint: `https://api.veritune.ai/agents/${agentConfig.name.toLowerCase().replace(/ /g, '-')}`,
+      apiKey: `vt_${Math.random().toString(36).substring(2, 28)}`,
+      pricing: agentConfig.pricing,
+      deploymentCost,
+      settings: {
+        temperature: agentConfig.temperature,
+        maxTokens: agentConfig.maxTokens,
+        rateLimits: agentConfig.rateLimits
+      }
+    })
+
     // Simulate deployment
     setTimeout(() => {
+      updateAgent(agent.id, { status: 'deployed' })
       setDeploymentStatus('deployed')
     }, 3000)
   }
@@ -673,12 +706,40 @@ export default function AgentBuilder() {
         )}
       </div>
 
+      {/* Deployment Cost Summary */}
+      {selectedModel && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Deployment Summary</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Model:</span>
+              <span className="text-sm font-medium text-gray-900">{selectedModel.name}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Deployment Type:</span>
+              <span className="text-sm font-medium text-gray-900 capitalize">{agentConfig.deploymentType}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Model Size:</span>
+              <span className="text-sm font-medium text-gray-900">{selectedModel.parameters}</span>
+            </div>
+            <div className="border-t pt-3 flex justify-between items-center">
+              <span className="text-base font-medium text-gray-900">Deployment Cost:</span>
+              <span className="text-lg font-bold text-gray-900">{formatCurrency(calculateDeploymentCost())}</span>
+            </div>
+            <div className="text-xs text-gray-500">
+              * One-time deployment fee. Usage charges may apply based on your pricing configuration.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Deploy Button */}
       <div className="flex justify-center pt-6">
         <button
           onClick={handleDeploy}
-          disabled={deploymentStatus === 'deploying'}
-          className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center text-lg font-medium"
+          disabled={deploymentStatus === 'deploying' || !selectedModel || !agentConfig.name}
+          className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center text-lg font-medium"
         >
           {deploymentStatus === 'deploying' ? (
             <>
